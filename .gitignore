@@ -1,0 +1,4 @@
+/*.raw
+/*.img
+zig-out/
+.zig-cache/
