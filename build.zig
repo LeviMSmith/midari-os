@@ -1,28 +1,9 @@
 const std = @import("std");
+const sub_kernel = @import("kernel/build.zig");
 
-fn build_bootloader(b: *std.Build) void {
-    const target = b.standardTargetOptions(.{
-        .default_target = b.resolveTargetQuery(.{
-            .os_tag = .uefi,
-            .abi = .msvc,
-        }).query,
-    });
-    const optimize = b.standardOptimizeOption(.{});
-    const exe = b.addExecutable(.{
-        .name = "boot",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("boot/efi/main.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
-    });
+pub fn build(b: *std.Build) !void {
+    const enable_kernel = b.option(bool, "kernel", "Build kernel") orelse true;
 
-    const install = b.addInstallArtifact(exe, .{
-        .dest_sub_path = "EFI/BOOT/BOOTX64.EFI",
-    });
-    b.getInstallStep().dependOn(&install.step);
-}
-
-pub fn build(b: *std.Build) void {
-    build_bootloader(b);
+    // if (enable_kernel) sub_kernel.addToBuild(b, target, optimize);
+    if (enable_kernel) _ = try sub_kernel.build(b);
 }
