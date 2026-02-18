@@ -13,7 +13,7 @@ pub fn build(b: *std.Build) !void {
     const exe = b.addExecutable(.{
         .name = "boot",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("kernel/main.zig"),
+            .root_source_file = b.path("main.zig"),
             .target = target,
             .optimize = optimize,
         }),
