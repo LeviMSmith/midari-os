@@ -1,31 +1,20 @@
 const std = @import("std");
 
-//// Utils ////
-
-fn addSubprojectBuild(b: *std.Build, build_file: []const u8, prefix: []const u8) *std.Build.Step.Run {
-    return b.addSystemCommand(&.{
-        "zig",
-        "build",
-        "--build-file",
-        build_file,
-        "--prefix",
-        prefix,
-    });
-}
-
-//// Almighty Main Build ////
-
 pub fn build(b: *std.Build) !void {
-    const kernel_out_path = try std.fs.path.join(b.allocator, &.{
-        b.install_prefix,
-        "kernel",
+    const target = b.standardTargetOptions(.{});
+    const optimize = b.standardOptimizeOption(.{});
+
+    // Kernel build overrides os and abi!
+    const kernel_dep = b.dependency("kernel", .{
+        .target = target,
+        .optimize = optimize,
     });
-    defer b.allocator.free(kernel_out_path);
-    const kernel_in_path = "kernel" ++ std.fs.path.sep_str ++ "build.zig";
 
-    const kernel_cmd = addSubprojectBuild(b, kernel_in_path, kernel_out_path);
-    const kernel_step = b.step("kernel", "Build the kernel subproject");
-    kernel_step.dependOn(&kernel_cmd.step);
+    // Grab an artifact defined by kernel/build.zig
+    const kernel_efi = kernel_dep.artifact("boot"); // name must match the executable step name
 
-    b.getInstallStep().dependOn(&kernel_cmd.step);
+
+    // Hook it into your default install step
+    b.getInstallStep().dependOn(&kernel_efi.step);
 }
+

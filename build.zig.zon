@@ -1,0 +1,11 @@
+.{
+    .name = .midari,
+    .version = "0.0.0",
+    .dependencies = .{
+        .kernel = .{
+            .path = "kernel",
+        },
+    },
+    .paths = .{""},
+    .fingerprint = 0x45bcabd0b379c2b5,
+}
