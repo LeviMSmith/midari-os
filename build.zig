@@ -3,7 +3,14 @@ const std = @import("std");
 const BuildError = error{UnsupportedArchitecture};
 
 fn build_kernel(b: *std.Build) !void {
-    const target = b.standardTargetOptions(.{});
+    //// Config ////
+    // NOTE: target os and abi are overriden to simplify build.
+    // arch can still be set by caller.
+    var tq = b.standardTargetOptions(.{}).query;
+    tq.os_tag = .uefi;
+    tq.abi = .msvc;
+
+    const target = b.resolveTargetQuery(tq);
     const optimize = b.standardOptimizeOption(.{});
 
     const target_name = switch (target.result.cpu.arch) {
@@ -12,11 +19,15 @@ fn build_kernel(b: *std.Build) !void {
         else => return BuildError.UnsupportedArchitecture,
     };
 
-    const dep = b.dependency("kernel", .{
-        .target = target,
-        .optimize = optimize,
+    // Target
+    const exe = b.addExecutable(.{
+        .name = target_name,
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("kernel/main.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
-    const exe = dep.artifact(target_name);
 
     const target_output = b.addInstallArtifact(exe, .{
         .dest_dir = .{
