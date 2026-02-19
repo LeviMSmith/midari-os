@@ -1,11 +1,9 @@
 const std = @import("std");
+const preboot = @import("preboot.zig");
 
-pub fn main() void {
-    const system_table = std.os.uefi.system_table;
-    const console_out = system_table.con_out orelse return;
-
-    const msg = std.unicode.utf8ToUtf16LeStringLiteral("Hello world!");
-    _ = console_out.outputString(msg) catch return;
+pub fn main() std.os.uefi.Error!void {
+    try preboot.prepare();
+    preboot.logStringLiteral("Hello world!") catch {};
 
     while (true) {}
 }
