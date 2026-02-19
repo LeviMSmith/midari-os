@@ -1,20 +1,34 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) !void {
+const BuildError = error{UnsupportedArchitecture};
+
+fn build_kernel(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // Kernel build overrides os and abi!
-    const kernel_dep = b.dependency("kernel", .{
+    const target_name = switch (target.result.cpu.arch) {
+        .aarch64 => "BOOTAARCH64",
+        .x86_64 => "BOOTX64",
+        else => return BuildError.UnsupportedArchitecture,
+    };
+
+    const dep = b.dependency("kernel", .{
         .target = target,
         .optimize = optimize,
     });
+    const exe = dep.artifact(target_name);
 
-    // Grab an artifact defined by kernel/build.zig
-    const kernel_efi = kernel_dep.artifact("boot"); // name must match the executable step name
+    const target_output = b.addInstallArtifact(exe, .{
+        .dest_dir = .{
+            .override = .{
+                .custom = "EFI" ++ std.fs.path.sep_str ++ "BOOT",
+            },
+        },
+    });
 
-
-    // Hook it into your default install step
-    b.getInstallStep().dependOn(&kernel_efi.step);
+    b.getInstallStep().dependOn(&target_output.step);
 }
 
+pub fn build(b: *std.Build) !void {
+    try build_kernel(b);
+}

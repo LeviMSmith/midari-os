@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) !void {
 
     // Target
     const exe = b.addExecutable(.{
-        .name = "boot",
+        .name = target_name,
         .root_module = b.createModule(.{
             .root_source_file = b.path("main.zig"),
             .target = target,
@@ -29,10 +29,5 @@ pub fn build(b: *std.Build) !void {
         }),
     });
 
-    exe.name = target_name;
-
-    const exe_install = b.addInstallArtifact(exe, .{
-        .dest_sub_path = "boot/EFI/BOOT/BOOTX64.EFI",
-    });
-    b.default_step.dependOn(&exe_install.step);
+    b.installArtifact(exe);
 }
