@@ -23,7 +23,8 @@ pub fn prepare() !void {
 
 /// Basic splash logging for tracibility
 /// Converts msg to utf-16. Can fail if con_out is null.
-/// `prepare` should be called first
+/// `prepare` should be called first.
+/// Logs to both the default console and first found serial
 pub fn logStringLiteral(comptime msg: []const u8) !void {
     const console_out = opt_console_out orelse return PrebootError.Console;
 
