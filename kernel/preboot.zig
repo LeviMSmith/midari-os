@@ -3,7 +3,7 @@
 
 const std = @import("std");
 
-const PrebootError = error{Console};
+pub const PrebootError = error{ Console, BootServices };
 var opt_console_out: ?*std.os.uefi.protocol.SimpleTextOutput = null;
 
 fn prepareConsole() !void {
@@ -33,6 +33,33 @@ pub fn logStringLiteral(comptime msg: []const u8) !void {
 }
 
 /// Exit uefi boot services
-pub fn boot() !void {
-    logStringLiteral("Exiting boot services") catch {};
+pub fn boot() !std.os.uefi.tables.MemoryMapInfo {
+    const boot_services = std.os.uefi.system_table.boot_services orelse unreachable;
+    const image_handle = std.os.uefi.handle;
+
+    // Attempt to exit boot services a few times.
+    // Could be things changing memory between calls, and firmware
+    // sometimes stops changing memory after the first
+    // attempt, so a few attempts in normal and expected.
+    var exit_err: std.os.uefi.tables.BootServices.ExitBootServicesError = undefined;
+    for (0..2) |i| {
+        _ = i;
+
+        const memory_map_info = boot_services.getMemoryMapInfo() catch |err| {
+            logStringLiteral("Failed to get memory map info") catch {};
+            return err;
+        };
+        boot_services.exitBootServices(image_handle, memory_map_info.key) catch |err| {
+            exit_err = err;
+            logStringLiteral("Attempt to exit boot services failed. Trying again.") catch {};
+            continue;
+        };
+
+        logStringLiteral("Exited boot services") catch {};
+        return memory_map_info;
+    }
+
+    // All attempts failed
+    logStringLiteral("Failed to exit boot services") catch {};
+    return exit_err;
 }
