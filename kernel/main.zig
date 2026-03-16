@@ -1,10 +1,10 @@
 const std = @import("std");
-const preboot = @import("preboot.zig");
+const kernel = @import("root.zig");
 
 pub fn main() std.os.uefi.Error!void {
-    try preboot.init();
-    preboot.logStringLiteral("Midari OS") catch {};
-    try preboot.boot();
+    try kernel.preboot.init();
+    kernel.preboot.logStringLiteral("Midari OS") catch {};
+    try kernel.preboot.boot();
 
     while (true) {}
 }

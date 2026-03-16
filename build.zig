@@ -19,6 +19,11 @@ fn build_kernel(b: *std.Build) !void {
         else => return BuildError.UnsupportedArchitecture,
     };
 
+    const mod = b.addModule(target_name, .{
+        .root_source_file = b.path("kernel/root.zig"),
+        .target = target
+    });
+
     // Target
     const exe = b.addExecutable(.{
         .name = target_name,
@@ -26,6 +31,9 @@ fn build_kernel(b: *std.Build) !void {
             .root_source_file = b.path("kernel/main.zig"),
             .target = target,
             .optimize = optimize,
+            .imports = &.{
+                .{ .name = target_name, .module = mod},
+            },
         }),
     });
 
