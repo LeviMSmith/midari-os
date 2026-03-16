@@ -55,7 +55,6 @@ pub fn boot() !std.os.uefi.tables.MemoryMapInfo {
             continue;
         };
 
-        logStringLiteral("Exited boot services") catch {};
         return memory_map_info;
     }
 
