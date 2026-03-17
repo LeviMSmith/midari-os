@@ -56,7 +56,7 @@ fn prepareDbgConsole() std.os.uefi.Error!void {
 /// This includes: console, debug console
 pub fn init() std.os.uefi.Error!void {
     try prepareConsole();
-    try prepareDbgConsole();
+    // try prepareDbgConsole();
 }
 
 /// Basic splash logging for tracibility
@@ -73,15 +73,13 @@ pub fn logStringLiteral(comptime msg: []const u8) std.os.uefi.Error!void {
         con_err = err;
     };
 
-    const dbg_console_out = opt_dbg_console_out orelse {
-        _ = console_out.outputString(std.unicode.utf8ToUtf16LeStringLiteral("Failed to repeat message to serial console. Not set.")) catch {};
-        return con_err;
-    };
-    _ = dbg_console_out.write(msg ++ "\r\n") catch {
-        _ = console_out.outputString(std.unicode.utf8ToUtf16LeStringLiteral("Failed to repeat message to serial console. Write error.")) catch {};
-    };
-
-    return con_err;
+    // const dbg_console_out = opt_dbg_console_out orelse {
+    //     _ = console_out.outputString(std.unicode.utf8ToUtf16LeStringLiteral("Failed to repeat message to serial console. Not set.")) catch {};
+    //     return con_err;
+    // };
+    // _ = dbg_console_out.write(msg ++ "\r\n") catch {
+    //     _ = console_out.outputString(std.unicode.utf8ToUtf16LeStringLiteral("Failed to repeat message to serial console. Write error.")) catch {};
+    // };
 }
 
 /// Exit uefi boot services
