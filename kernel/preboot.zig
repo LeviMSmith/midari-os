@@ -4,14 +4,13 @@
 
 const std = @import("std");
 
-pub const PrebootError = error{ Console, BootServices };
 var opt_console_out: ?*std.os.uefi.protocol.SimpleTextOutput = null;
 var opt_dbg_console_out: ?*std.os.uefi.protocol.SerialIo = null;
 
 /// Find and prepare the uefi provided output console.
-fn prepareConsole() !void {
+fn prepareConsole() std.os.uefi.Error!void {
     // Ensure console
-    const console_out = std.os.uefi.system_table.con_out orelse return PrebootError.Console;
+    const console_out = std.os.uefi.system_table.con_out.?;
     opt_console_out = console_out;
 
     try console_out.setAttribute(.{ .background = .black, .foreground = .red });
@@ -21,9 +20,9 @@ fn prepareConsole() !void {
 /// Automatically find a suitable serial out for
 /// debug information and prepare it to be easily
 /// output to.
-fn prepareDbgConsole() !void {
+fn prepareDbgConsole() std.os.uefi.Error!void {
 
-    // 1. Enumate devices by serial capability
+    // 1. Discover devices by serial capability
     // 2. Pick one
     // 3. Set settings.
 
@@ -32,8 +31,14 @@ fn prepareDbgConsole() !void {
         .by_protocol = &std.os.uefi.protocol.SerialIo.guid,
     });
 
-    // TODO: Actually check if we found one
-    const handle = (handles orelse return PrebootError.BootServices)[0];
+    if (handles == null) {
+        return std.os.uefi.Error.NotFound;
+    }
+
+    if (handles.?.len < 1) {
+        return std.os.uefi.Error.NotFound;
+    }
+    const handle = handles.?[0];
     opt_dbg_console_out = try boot_services.openProtocol(std.os.uefi.protocol.SerialIo, handle, .{
         .exclusive = .{
             .agent = std.os.uefi.handle,
@@ -49,9 +54,9 @@ fn prepareDbgConsole() !void {
 
 /// Prepare everything in the preboot environment.
 /// This includes: console, debug console
-pub fn init() !void {
-    prepareConsole() catch {}; // We don't necessarily need the console
-    prepareDbgConsole() catch {}; // We don't necessarily need the console
+pub fn init() std.os.uefi.Error!void {
+    try prepareConsole();
+    try prepareDbgConsole();
 }
 
 /// Basic splash logging for tracibility
@@ -59,11 +64,11 @@ pub fn init() !void {
 /// Logs to both the default console and first found serial
 /// Returned error is always main console. Serial will be silently
 /// ignored
-pub fn logStringLiteral(comptime msg: []const u8) !void {
-    const console_out = opt_console_out orelse return PrebootError.Console;
+pub fn logStringLiteral(comptime msg: []const u8) std.os.uefi.Error!void {
+    const console_out = opt_console_out orelse return std.os.uefi.Error.NotFound;
 
     const con_msg = std.unicode.utf8ToUtf16LeStringLiteral(msg ++ "\r\n");
-    var con_err: anyerror = undefined;
+    var con_err: std.os.uefi.Error = undefined;
     _ = console_out.outputString(con_msg) catch |err| {
         con_err = err;
     };
