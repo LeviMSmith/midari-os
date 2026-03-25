@@ -8,7 +8,7 @@
 //! application and kernel use.
 //!
 //! For example,
-//! 1. UEFI passes ACPI table to kernel
+//! 1. UEFI passes ACPI table and DBI to kernel
 //! 2. Kernel does it's thing until we get to
 //!    device initialization
 //! 3. Device module will go through each of it's
