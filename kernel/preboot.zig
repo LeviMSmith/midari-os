@@ -45,7 +45,7 @@ const dtb_guid: std.os.uefi.Guid = .{
 
 /// Adds the dtb pointer to kinit if available.
 fn prepareDtb(kinit: *Kinit) void {
-    const config_table = std.os.uefi.system_table.configuration_table orelse unreachable;
+    const config_table = std.os.uefi.system_table.configuration_table;
     for (config_table) |table| {
         if (std.os.uefi.Guid.eql(table.vendor_guid, dtb_guid)) {
             logStringLiteral("Found dbt");

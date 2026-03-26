@@ -1,6 +1,15 @@
 const std = @import("std");
+const Dev = @import("dev/Dev.zig");
 
 memory_map_info: std.os.uefi.tables.MemoryMapInfo,
-dtb: ?*anyopaque,
+dtb: ?[*]u8,
+dev: Dev,
 
-pub fn boot(self: *@This()) void {}
+/// Initialize the entire environment
+pub fn boot(self: *@This()) !void {
+    if (self.dtb != null) {
+        try self.dev.init(self.dtb orelse unreachable);
+    }
+
+    while (true) {}
+}

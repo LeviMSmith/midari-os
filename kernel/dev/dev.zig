@@ -21,3 +21,11 @@
 //!    would be allocated.
 //! 5. The code in the device type specifics will handle the vfs
 //!    implementation
+
+const DeviceTree = @import("DeviceTree.zig");
+
+device_tree: DeviceTree,
+
+pub fn init(self: *@This(), dtb: [*]const u8) !void {
+   try self.device_tree.init(dtb);
+}
