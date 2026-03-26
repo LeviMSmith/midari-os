@@ -34,10 +34,35 @@ pub fn logStringLiteral(comptime msg: []const u8) std.os.uefi.Error!void {
     };
 }
 
+const dtb_guid: std.os.uefi.Guid = .{
+    .time_low = 0xb1b621d5,
+    .time_mid = 0xf19c,
+    .time_high_and_version = 0x41a5,
+    .clock_seq_high_and_reserved = 0x83,
+    .clock_seq_low = 0x0b,
+    .node = [_]u8{ 0xD9, 0x15, 0x2C, 0x69, 0xAA, 0xE0 },
+};
+
+/// Adds the dtb pointer to kinit if available.
+fn prepareDtb(kinit: *Kinit) void {
+    const config_table = std.os.uefi.system_table.configuration_table orelse unreachable;
+    for (config_table) |table| {
+        if (std.os.uefi.Guid.eql(table.vendor_guid, dtb_guid)) {
+            logStringLiteral("Found dbt");
+            kinit.dtb = table.vendor_table;
+            return;
+        }
+    }
+
+    logStringLiteral("No dbt found");
+}
+
 /// Exit uefi boot services
 pub fn boot(kinit: *Kinit) !void {
     const boot_services = std.os.uefi.system_table.boot_services orelse unreachable;
     const image_handle = std.os.uefi.handle;
+
+    prepareDtb(kinit);
 
     // Attempt to exit boot services a few times.
     // Could be things changing memory between calls and firmware
