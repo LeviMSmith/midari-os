@@ -7,25 +7,24 @@
 //! though will be higher level more generic handlers for
 //! application and kernel use.
 //!
-//! For example,
-//! 1. UEFI passes ACPI table and DBI to kernel
-//! 2. Kernel does it's thing until we get to
-//!    device initialization
-//! 3. Device module will go through each of it's
-//!    known methods for discovering and controlling
-//!    devices, keeping track as it goes along
-//! 4. These devices will have device files in a sort of
-//!    VFS that enables access (or at least handles) to
-//!    those physical or virtual devices, so in our example,
-//!    a uart or com port could be discovered and a tty
-//!    would be allocated.
-//! 5. The code in the device type specifics will handle the vfs
-//!    implementation
+//! Devices are accessible by type with generic handlers, but
+//! may be backed by another techology. E.g. Network over USB
+//!
+//! Devices
+//!   TTY (Virtual)
+//!     UART Backed
+//!   UART (Physical/Virtual)
+//!     GPIO Backed
+//!       BCM2875
+//!   GPIO (Physical/Virtual)
+//!     BCM2875 Backed
 
 const DeviceTree = @import("DeviceTree.zig");
 
 device_tree: DeviceTree,
 
 pub fn init(self: *@This(), dtb: [*]const u8) !void {
-   try self.device_tree.init(dtb);
+   // Discovery
+   // try self.device_tree.init(dtb);
+   _ = dtb;
 }
