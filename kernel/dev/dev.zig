@@ -24,7 +24,8 @@ const DeviceTree = @import("DeviceTree.zig");
 device_tree: DeviceTree,
 
 pub fn init(self: *@This(), dtb: [*]const u8) !void {
-   // Discovery
-   // try self.device_tree.init(dtb);
-   _ = dtb;
+    // Discovery
+    // try self.device_tree.init(dtb);
+    _ = dtb;
+    _ = self;
 }
