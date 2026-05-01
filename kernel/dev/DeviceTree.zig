@@ -1,3 +1,5 @@
+//! Everything pertaining to the device tree state in the kernel
+
 const std = @import("std");
 
 pub const FdtHeader = struct {
@@ -16,13 +18,14 @@ pub const FdtHeader = struct {
 fdt_header: FdtHeader,
 
 pub const Error = error{
-    Parse,
+    DtbParse,
 };
 
 fn parse_header(self: *@This(), dbt: [*]const u8) !void {
     self.fdt_header.magic = std.mem.readInt(u32, dbt[0..4], .big);
 }
 
+/// Parse out DTB and prepare discovered devices
 pub fn init(self: *@This(), dtb: [*]const u8) !void {
     try self.parse_header(dtb);
 }
