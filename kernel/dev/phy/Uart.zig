@@ -19,6 +19,11 @@ const UartDriver = union(UartDriverTag) {
 
 init: *fn () void,
 deinit: *fn () void,
-write: *fn () void,
+write: *fn ([:0]u8) void,
 
+// Common
+r_buffer: [256]u8,
+w_buffer: [256]u8,
+
+// Specialized
 driver: UartDriver,
