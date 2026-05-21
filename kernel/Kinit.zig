@@ -7,6 +7,7 @@ dev: Dev,
 
 /// Initialize the entire environment
 pub fn boot(self: *@This()) !void {
+    // Device tree
     if (self.dtb != null) {
         try self.dev.init(self.dtb orelse unreachable);
     }

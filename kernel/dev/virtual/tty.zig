@@ -1,7 +1,7 @@
 //! A tty is a virtual device which handles an
 //! interactive terminal over various supported
 //! devices
-//! They are always associated with an integer number
+//! They are always indexable with an integer number
 //! as well as their filesystem path.
 //! This file contains functionality for managing ttys
 //! as well as the Tty struct itself.
@@ -41,7 +41,7 @@ pub const Tty = struct {
         switch (self.device) {
             .uart => |uart| {
                 uart.output(msg);
-            }
+            },
         }
     }
 
@@ -51,7 +51,7 @@ pub const Tty = struct {
         switch (self.device) {
             .uart => |uart| {
                 uart.outputEndl();
-            }
+            },
         }
     }
 
@@ -62,7 +62,7 @@ pub const Tty = struct {
             .uart => |uart| {
                 uart.output(msg);
                 uart.outputEndl();
-            }
+            },
         }
     }
 };
