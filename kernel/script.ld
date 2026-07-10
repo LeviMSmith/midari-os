@@ -1,4 +1,5 @@
 _KERNEL_BASE = 0x40000000;
+_STACK_TOP = 0x50000000;
 MAXPAGESIZE = 4K;
 
 SECTIONS
@@ -31,6 +32,10 @@ SECTIONS
     _BSS_START = .;
     *(.bss .bss.* COMMON)
     _BSS_END = .;
+  }
+
+  .eh_frame : ALIGN(CONSTANT(MAXPAGESIZE)) {
+    *(.eh_frame .eh_frame.*)
   }
 
   . = ALIGN(CONSTANT(MAXPAGESIZE));

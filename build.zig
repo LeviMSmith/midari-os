@@ -12,6 +12,8 @@ fn build_kernel(b: *std.Build) !void {
     tq.os_tag = .freestanding;
     tq.abi = .msvc;
 
+    const emmit_assy = b.option(bool, "emitassy", "Emmit Assembly") orelse false;
+
     const target = b.resolveTargetQuery(tq);
     const optimize = b.standardOptimizeOption(.{});
 
@@ -39,7 +41,25 @@ fn build_kernel(b: *std.Build) !void {
     exe.root_module.addAssemblyFile(b.path("kernel/head.S"));
 
     exe.setLinkerScript(b.path("kernel/script.ld"));
+
+    // Exception frame header is something for unwinding the stack
+    // Don't know enough about using that for it to be useful.
+    // Could move it out to under .text.boot, but we're just going
+    // to disable for now
+    // This doesn't seem to work. We'll remove in objcopy?
+    // exe.link_eh_frame_hdr = false;
+
     b.installArtifact(exe);
+
+    /////////////////////////
+    ///// Other Formats /////
+    /////////////////////////
+
+    if (emmit_assy) {
+        const asm_file = exe.getEmittedAsm();
+        const install_asm = b.addInstallBinFile(asm_file, "midari.S");
+        b.getInstallStep().dependOn(&install_asm.step);
+    }
 
     const image = b.addObjCopy(exe.getEmittedBin(), .{
         .format = .bin,

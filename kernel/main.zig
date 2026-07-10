@@ -1,12 +1,16 @@
 const std = @import("std");
-// const kernel = @import("root.zig");
 
-// var kinit: kernel.Kinit = undefined;
+pub export fn _start() callconv(.naked) noreturn {
+    // Prepare stack pointer
+    asm volatile (
+        \\ldr x0, =_STACK_TOP
+        \\mov sp, x0
+    );
 
-pub export fn main() void {
-    // try kernel.preboot.init();
-    // try kernel.preboot.logStringLiteral("Midari OS");
-    // try kernel.preboot.boot(&kinit);
-
-    // kinit.boot() catch {};
+    while (true) {
+        // You spin me right round baby
+        // like a record baby round round
+        // right round
+        asm volatile ("wfe");
+    }
 }
