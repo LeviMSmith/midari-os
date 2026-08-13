@@ -1,13 +1,15 @@
 //! Object for handling a uart connection
 
 pub const Driver = enum {
-    none,
     bcm2837,
+    pl011,
 };
 
-init: *fn () void,
-deinit: *fn () void,
-write: *fn ([]u8) void,
+init: *fn (anyopaque) void,
+deinit: *fn (anyopaque) void,
 
-driver: Driver,
-driver_state: anyopaque,
+/// Synchronously write out the given buffer over uart.
+write: *fn (anyopaque, []u8) void,
+
+driver: ?Driver,
+driver_state: ?anyopaque,
