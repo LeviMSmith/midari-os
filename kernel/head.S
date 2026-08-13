@@ -48,7 +48,7 @@ exceptionVectorTable:
 	eret
 	.skip 120
 
-	// Exception from a lower EL and at least on lower EL is AArch64
+	// Exception from a lower EL and at least one lower EL is AArch64
 	b     handleExceptionGeneric // Synchronous
 	eret
 	.skip 120

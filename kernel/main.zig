@@ -3,6 +3,9 @@ const std = @import("std");
 extern fn exceptionVectorTable() callconv(.naked) noreturn;
 
 /// Test exception handler.
+/// This will cause a loop for illegal instructions
+/// since it branches directly back to the instruction
+/// that caused the exception.
 pub export fn handleExceptionGeneric() callconv(.naked) noreturn {
 
     // Exception return
@@ -13,7 +16,11 @@ pub export fn handleExceptionGeneric() callconv(.naked) noreturn {
     );
 }
 
-// Actual kernel entrypoint. Named to match linker conventions
+fn uart_put(msg: []const u8) void {
+    _ = msg;
+}
+
+/// Actual kernel entrypoint. Named to match linker conventions
 pub export fn _start() callconv(.naked) noreturn {
     // Prepare stack pointer
     asm volatile (
@@ -26,14 +33,13 @@ pub export fn _start() callconv(.naked) noreturn {
     asm volatile (
         \\ldr x0, =exceptionVectorTable
         \\msr VBAR_EL1, x0
-        \\ldr x0, =exceptionVectorTable
-        \\msr VBAR_EL2, x0
     );
 
     while (true) {
         // You spin me right round baby
         // like a record baby round round
         // right round
+        uart_put("midari ");
         asm volatile ("wfe");
     }
 }
