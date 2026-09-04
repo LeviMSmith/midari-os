@@ -20,14 +20,9 @@ fn uart_put(msg: []const u8) void {
     _ = msg;
 }
 
-/// Actual kernel entrypoint. Named to match linker conventions
-pub export fn _start() callconv(.naked) noreturn {
-    // Prepare stack pointer
-    asm volatile (
-        \\ldr x0, =_STACK_BOTTOM
-        \\mov sp, x0
-    );
-
+/// Kernel entry point. Gets called by _start
+/// Assumes stack is ready.
+fn kmain() noreturn {
     // Prepare vector table registers
     // Left L3 alone since I believe that's firmware controlled.
     asm volatile (
@@ -42,4 +37,20 @@ pub export fn _start() callconv(.naked) noreturn {
         uart_put("midari ");
         asm volatile ("wfe");
     }
+
+    asm volatile ("hlt");
+}
+
+/// Actual kernel entrypoint. Named to match linker conventions
+pub export fn _start() callconv(.naked) noreturn {
+    // Prepare stack pointer
+    // and call main to get out of the naked function.
+    // You can't call functions from a naked function.
+    asm volatile (
+        \\ldr x0, =_STACK_BOTTOM
+        \\mov sp, x0
+        \\br %[main_ptr]
+        :
+        : [main_ptr] "r" (&kmain),
+    );
 }
