@@ -5,7 +5,7 @@ const Uart = @import("../interface/Uart.zig");
 
 const Self = @This();
 
-const CrBit = enum(u15) {
+const CrBit = enum(u16) {
     uarten = 0, // Enable the uart
     siren = 1, // Enable SIR (infrared things)
     sirlp = 2, // SIR Low power
@@ -18,6 +18,18 @@ const CrBit = enum(u15) {
     out2 = 13,
     rtsen = 14, // RTS hardware flow enable
     ctsen = 15, // CTS hardware flow enable
+};
+
+const FrBit = enum(u16) {
+    cts = 0, // Clear to send
+    dsr = 1, // Data set ready
+    dcd = 2, // Data carrier detect
+    busy = 3, // UART busy
+    rxfe = 4, // Recieve FIFO empty
+    txff = 5, // Transmit FIFO full
+    rxff = 6, // Receive FIFO full
+    txfe = 7, // Transmit FIFO empty
+    ri = 8, // Ring indicator
 };
 
 /// Unsafely set the cr register without
@@ -34,6 +46,9 @@ fn setCr(self: *Self, opt: u15) void {
 
     const clear_state: u15 = 0;
     self.setCrRaw(clear_state);
+
+    // TODO: Don't do a dumb poll since it could hang
+    while (true) {}
 }
 
 pub fn _init(self: *Self, base_addr: usize) void {
