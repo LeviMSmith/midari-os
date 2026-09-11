@@ -13,10 +13,10 @@ boot:
 	.ascii "ARM\x64"    // Magico
 	.long  0            // res5
 
-	.section .text.exceptions, "ax"
-	.globl   exceptionVectorTable
-	.type    exceptionVectorTable, %function
-	.p2align 11
+.section .text.exceptions, "ax"
+.globl   exceptionVectorTable
+.type    exceptionVectorTable, %function
+.p2align 11
 
 	// All exceptions use same for now
 exceptionVectorTable:

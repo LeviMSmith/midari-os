@@ -5,31 +5,44 @@ const Uart = @import("../interface/Uart.zig");
 
 const Self = @This();
 
-const CrBit = enum(u16) {
-    uarten = 0, // Enable the uart
-    siren = 1, // Enable SIR (infrared things)
-    sirlp = 2, // SIR Low power
-    lbe = 7, // Loopback enable
-    txe = 8, // Transmission enable
-    rxe = 9, // Recieve enable
-    dtr = 10, // Data transmit ready
-    rts = 11, // Ready to send
-    out1 = 12,
-    out2 = 13,
-    rtsen = 14, // RTS hardware flow enable
-    ctsen = 15, // CTS hardware flow enable
-};
+fn bit(comptime T: type, comptime pos: T) T {
+    return 1 << pos;
+}
 
 const FrBit = enum(u16) {
-    cts = 0, // Clear to send
-    dsr = 1, // Data set ready
-    dcd = 2, // Data carrier detect
-    busy = 3, // UART busy
-    rxfe = 4, // Recieve FIFO empty
-    txff = 5, // Transmit FIFO full
-    rxff = 6, // Receive FIFO full
-    txfe = 7, // Transmit FIFO empty
-    ri = 8, // Ring indicator
+    cts = bit(u16, 0), // Clear to send
+    dsr = bit(u16, 1), // Data set ready
+    dcd = bit(u16, 2), // Data carrier detect
+    busy = bit(u16, 3), // UART busy
+    rxfe = bit(u16, 4), // Recieve FIFO empty
+    txff = bit(u16, 5), // Transmit FIFO full
+    rxff = bit(u16, 6), // Receive FIFO full
+    txfe = bit(u16, 7), // Transmit FIFO empty
+    ri = bit(u16, 8), // Ring indicator
+};
+
+const CrBit = enum(u16) {
+    uarten = bit(u16, 0), // Enable the uart
+    siren = bit(u16, 1), // Enable SIR (infrared things)
+    sirlp = bit(u16, 2), // SIR Low power
+    lbe = bit(u16, 7), // Loopback enable
+    txe = bit(u16, 8), // Transmission enable
+    rxe = bit(u16, 9), // Recieve enable
+    dtr = bit(u16, 10), // Data transmit ready
+    rts = bit(u16, 11), // Ready to send
+    out1 = bit(u16, 12),
+    out2 = bit(u16, 13),
+    rtsen = bit(u16, 14), // RTS hardware flow enable
+    ctsen = bit(u16, 15), // CTS hardware flow enable
+};
+
+const LcrHBit = enum(u16) {
+    brk = bit(u16, 0), // Send break
+    pen = bit(u16, 1), // Parity enable
+    eps = bit(u16, 2), // Even parity select
+    stp2 = bit(u16, 3), // Two stop bits select
+    fen = bit(u16, 4), // Enable fifos
+    sps = bit(u16, 7), // Stick parity select
 };
 
 /// Unsafely set the cr register without
@@ -41,17 +54,39 @@ fn setCrRaw(self: *Self, opt: u15) void {
 
 /// Disables the uart and flushes any ongoing writes
 /// before setting the CR and returning
-fn setCr(self: *Self, opt: u15) void {
-    _ = opt;
-
+fn setCr(self: *Self, opt: u16) void {
+    // Disable the device
     const clear_state: u15 = 0;
     self.setCrRaw(clear_state);
 
+    // Ensure we've finished trasmitting the last character
     // TODO: Don't do a dumb poll since it could hang
-    while (true) {}
+    while (true) {
+        if (self.state.fr.* & FrBit.busy == 0) {
+            break;
+        }
+    }
+
+    // Set the register while being sensitive to FIFO
+    // requirements
+    if (self.state.lcr_h & LcrHBit.fen) {
+        // Flush FIFO if enabled and then restore
+        self.state.lcr_h.* &= !LcrHBit.fen;
+        self.setCrRaw(opt);
+        self.state.lcr_h.* |= LcrHBit.fen;
+    } else {
+        self.setCrRaw(opt);
+    }
 }
 
+fn setLcrH(self: *Self, opt: u16) void {
+    opt |= 0b1111111100000000 & self.state.lcr_h.*;
+    self.state.lcr_h.* = opt;
+}
+
+/// Prepare the UART to be able to transmit and receive
 pub fn _init(self: *Self, base_addr: usize) void {
+    // Prepare addresses
     self.driver_state = &self.state;
     self.state.base_addr = base_addr;
     self.state.dr = @ptrFromInt(base_addr);
@@ -59,21 +94,15 @@ pub fn _init(self: *Self, base_addr: usize) void {
     self.state.lcr_h = @ptrFromInt(base_addr + 0x2c);
     self.state.cr = @ptrFromInt(base_addr + 0x30);
 
-    self.state.lcr_h.* = 0b01110110; // 8e1
-
-    // Enable UART, transmission on, recieve off
-    // SIRLP off, no loopback, no hardware flow control
-    var cr_state = 0b0000000100000001;
-    // Ensure we keep bits 3:6 the same per the doc's
-    // "do not modify" requirement
-    cr_state |= 0b0000000001111000 & self.state.cr.*;
-    self.state.cr.* = cr_state;
+    self.setLcrH(0b01100000); // 8n1
+    self.setCr(CrBit.uarten | CrBit.txe);
 }
 
 pub fn _deinit(self: *Self) void {
     _ = self;
 }
 
+/// Assumes device is already ready to transmit
 pub fn _write(self: *Self, msg: []u8) void {
     _ = self;
     _ = msg;
