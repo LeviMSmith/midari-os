@@ -1,4 +1,5 @@
 const std = @import("std");
+const Pl011 = @import("dev/driver/Pl011.zig");
 
 extern fn exceptionVectorTable() callconv(.naked) noreturn;
 
@@ -16,25 +17,26 @@ pub export fn handleExceptionGeneric() callconv(.naked) noreturn {
     );
 }
 
-fn uart_put(msg: []const u8) void {
-    _ = msg;
-}
-
 /// Kernel entry point. Gets called by _start
 /// Assumes stack is ready.
 fn kmain() noreturn {
     // Prepare vector table registers
-    // Left L3 alone since I believe that's firmware controlled.
+    // We start on EL1 on qemu. We should later
+    //
     asm volatile (
         \\ldr x0, =exceptionVectorTable
         \\msr VBAR_EL1, x0
     );
 
+    // Get our uart driver
+    var pl011: Pl011 = .{ .state = undefined };
+    pl011.init(&pl011, 0x09000000);
+
     while (true) {
         // You spin me right round baby
         // like a record baby round round
         // right round
-        uart_put("midari ");
+        pl011.write(&pl011, "midari ");
         asm volatile ("wfe");
     }
 
