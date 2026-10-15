@@ -41,7 +41,10 @@ fn parse_header(self: *@This(), dbt: [*]const u8) !void {
 }
 
 /// Must have successfully called parse_header first.
-fn parse_structure_block(self: *@This(), dbt: [*]const u8) void {}
+fn parse_structure_block(self: *@This(), dbt: [*]const u8) void {
+    _ = self;
+    _ = dbt;
+}
 
 pub fn init(self: *@This(), dtb: [*]const u8) !void {
     try self.parse_header(dtb);

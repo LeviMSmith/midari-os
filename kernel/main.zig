@@ -1,5 +1,6 @@
 const std = @import("std");
 const Pl011 = @import("dev/driver/Pl011.zig");
+const DeviceTree = @import("dev/discovery/DeviceTree.zig");
 
 extern fn exceptionVectorTable() callconv(.naked) noreturn;
 
@@ -20,6 +21,15 @@ pub export fn handleExceptionGeneric() callconv(.naked) noreturn {
 /// Kernel entry point. Gets called by _start
 /// Assumes stack is ready.
 fn kmain() noreturn {
+    // Nab the DTB address
+    const dbt: [*]const u8 = undefined;
+    asm volatile (
+        \\msr dbt, x0
+    );
+
+    var device_tree: DeviceTree = undefined;
+    DeviceTree.init(&device_tree, dbt);
+
     // Prepare vector table registers
     // We start on EL1 on qemu. We should later
     //
@@ -32,15 +42,13 @@ fn kmain() noreturn {
     var pl011: Pl011 = .{ .state = undefined };
     pl011.init(&pl011, 0x09000000);
 
-    while (true) {
-        // You spin me right round baby
-        // like a record baby round round
-        // right round
-        pl011.write(&pl011, "midari ");
-        asm volatile ("wfe");
-    }
+    pl011.write(&pl011, "Midari OS V0.1.0\n");
+    pl011.write(
+        &pl011,
+    );
 
     asm volatile ("hlt");
+    unreachable;
 }
 
 /// Actual kernel entrypoint. Named to match linker conventions
