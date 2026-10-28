@@ -1,5 +1,5 @@
 _KERNEL_BASE = 0x40000000;
-STACK_SIZE = 0x800000;
+STACK_SIZE = 0x8000;
 MAXPAGESIZE = 4K;
 
 SECTIONS
@@ -12,6 +12,7 @@ SECTIONS
   .text : {
     _TEXT_START = .;
     KEEP(*(.text.boot))
+    KEEP(*(.text.exceptions))
     *(.text .text.*)
     _TEXT_END = .;
   }
@@ -41,6 +42,8 @@ SECTIONS
   . = ALIGN(CONSTANT(MAXPAGESIZE));
   _KERNEL_END = .;
 
-  _KERNEL_SIZE = _KERNEL_END - _KERNEL_START;
-  _STACK_BOTTOM = _KERNEL_END + STACK_SIZE;
+  _STACK_HIGH = _KERNEL_END;
+  _STACK_LOW = _KERNEL_END + STACK_SIZE;
+
+  _KERNEL_SIZE = _STACK_LOW - _KERNEL_START;
 }

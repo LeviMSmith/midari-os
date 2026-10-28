@@ -18,17 +18,22 @@ pub export fn handleExceptionGeneric() callconv(.naked) noreturn {
     );
 }
 
+var stack: [0x4000]u8 = undefined;
+
 /// Kernel entry point. Gets called by _start
-/// Assumes stack is ready.
+/// Requires a prepared stack space.
 fn kmain() noreturn {
     // Nab the DTB address
-    const dbt: [*]const u8 = undefined;
-    asm volatile (
-        \\msr dbt, x0
-    );
+    var dbt: u64 = undefined;
 
-    var device_tree: DeviceTree = undefined;
-    DeviceTree.init(&device_tree, dbt);
+    asm volatile (
+        \\str x0, [%[addr]]
+        :
+        : [addr] "r" (&dbt),
+        : .{ .memory = true });
+
+    // var device_tree: DeviceTree = undefined;
+    // try DeviceTree.init(&device_tree, dbt);
 
     // Prepare vector table registers
     // We start on EL1 on qemu. We should later
@@ -38,16 +43,32 @@ fn kmain() noreturn {
         \\msr VBAR_EL1, x0
     );
 
+    // Let ourselves use SIMD for zig's routines.
+    // NOTE: This should obviously later be handled more carefully.
+    // Possession of the device needs to be managed if we ever
+    // get to user space.
+    // CPACR_EL1
+
+    // asm volatile (
+    //     \\mov x0, #(3 << 20)
+    //     \\orr x0, x0, #(3<<16)
+    //     \\msr CPACR_EL1, x0
+    //     \\mov x0, xzr
+    //     \\msr FPCR, x0
+    //     \\isb
+    // );
+
     // Get our uart driver
     var pl011: Pl011 = .{ .state = undefined };
     pl011.init(&pl011, 0x09000000);
 
     pl011.write(&pl011, "Midari OS V0.1.0\n");
-    pl011.write(
-        &pl011,
-    );
 
-    asm volatile ("hlt");
+    while (true) {
+        asm volatile (
+            \\wfe
+        );
+    }
     unreachable;
 }
 
@@ -56,9 +77,18 @@ pub export fn _start() callconv(.naked) noreturn {
     // Prepare stack pointer
     // and call main to get out of the naked function.
     // You can't call functions from a naked function.
+    // asm volatile (
+    //     \\ldr x1, =%[stack_ptr]
+    //     \\mov sp, x1
+    //     \\br %[main_ptr]
+    //     :
+    //     : [main_ptr] "r" (&kmain),
+    //       [stack_ptr] "r" (&stack),
+    // );
+
     asm volatile (
-        \\ldr x0, =_STACK_BOTTOM
-        \\mov sp, x0
+        \\ldr x1, =_STACK_LOW
+        \\mov sp, x1
         \\br %[main_ptr]
         :
         : [main_ptr] "r" (&kmain),
